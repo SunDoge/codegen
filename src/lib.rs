@@ -51,6 +51,7 @@ enum Item {
     Trait(Trait),
     Enum(Enum),
     Impl(Impl),
+    Function(Function),
     Raw(String),
 }
 
@@ -409,6 +410,23 @@ impl Scope {
         self
     }
 
+    /// Push a new `fn` block, returning a mutable reference to it.
+    pub fn new_fn(&mut self, name: &str) -> &mut Function {
+        self.push_fn(Function::new(name));
+
+        match *self.items.last_mut().unwrap() {
+            Item::Function(ref mut v) => v,
+            _ => unreachable!(),
+        }
+    }
+
+    /// Push an `fn` block.
+    pub fn push_fn(&mut self, item: Function) -> &mut Self {
+        self.items.push(Item::Function(item));
+        self
+    }
+
+
     /// Push a raw string to the scope.
     ///
     /// This string will be included verbatim in the formatted string.
@@ -450,6 +468,7 @@ impl Scope {
                 Item::Trait(ref v) => v.fmt(fmt)?,
                 Item::Enum(ref v) => v.fmt(fmt)?,
                 Item::Impl(ref v) => v.fmt(fmt)?,
+                Item::Function(ref v) => v.fmt(false, fmt)?,
                 Item::Raw(ref v) => {
                     write!(fmt, "{}\n", v)?;
                 }
